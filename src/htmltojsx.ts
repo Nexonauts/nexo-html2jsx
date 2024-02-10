@@ -1,6 +1,7 @@
-'use strict';
-import HTMLDOMPropertyConfig from 'react-dom-core/lib/HTMLDOMPropertyConfig';
-import SVGDOMPropertyConfig from 'react-dom-core/lib/SVGDOMPropertyConfig';
+"use strict";
+import HTMLDOMPropertyConfig from './lib/HTMLDOMPropertyConfig';
+import SVGDOMPropertyConfig from './lib/SVGDOMPropertyConfig';
+
 
 type NodeType = {
     ELEMENT: number;
@@ -65,6 +66,7 @@ for (const propname in HTMLDOMPropertyConfig.Properties) {
     if (!HTMLDOMPropertyConfig.Properties.hasOwnProperty(propname)) {
         continue;
     }
+    
 
     const mapFrom = HTMLDOMPropertyConfig.DOMAttributeNames[propname] || propname.toLowerCase();
 
@@ -113,7 +115,7 @@ function trimEnd(haystack: string, needle: string): string {
 }
 
 function hyphenToCamelCase(string: string): string {
-    return string.replace(/-(.)/g, (match, chr) => {
+    return string.replace(/-(.)/g, (_match, chr) => {
         return chr.toUpperCase();
     });
 }
@@ -133,7 +135,7 @@ function isNumeric(input: any): boolean {
 }
 
 class StyleParser {
-    styles: { [key: string]: string };
+    styles!: Record<string, string>;
 
     constructor(rawStyle: string) {
         this.parse(rawStyle);
@@ -185,6 +187,7 @@ class StyleParser {
         }
     }
 }
+
 export type configType = {
     createClass: boolean;
     outputComponentName?: string;
@@ -278,7 +281,7 @@ export default function htmlToJsx(createElement: (tag: string) => Element): (con
                     this.output += config.indent + ' }\n';
                     this.output += '});';
                 }
-                
+
                 return this.output;
             }
 
@@ -286,7 +289,7 @@ export default function htmlToJsx(createElement: (tag: string) => Element): (con
                 const regex = /<([^\s>]+)/;
                 const match = (html || '').match(regex);
 
-                return ((match && CONTAINER_MAPPING[match[1] || "caption"] ) ? CONTAINER_MAPPING[match[1] || "caption" ] : 'div') as string;
+                return ((match && CONTAINER_MAPPING[match[1] || "caption"]) ? CONTAINER_MAPPING[match[1] || "caption"] : 'div') as string;
             }
 
             _cleanInput(html: string): string {
@@ -441,16 +444,18 @@ export default function htmlToJsx(createElement: (tag: string) => Element): (con
                 }
             }
 
-            _getElementAttribute(node: any, attribute: any): string {
+            _getElementAttribute(node: Element, attribute: Attr): string {
                 switch (attribute.name) {
                     case 'style':
                         return this._getStyleAttribute(attribute.value);
                     default:
-                    const tagName = node.tagName.toLowerCase() as keyof ElementAttributeMapping | keyof SvgAttributeMapping;
-                        let name =
-                            (ELEMENT_ATTRIBUTE_MAPPING[tagName] && ELEMENT_ATTRIBUTE_MAPPING[tagName][attribute.name]) ||
+                        const tagName = node.tagName.toLowerCase() as
+                            keyof typeof ELEMENT_ATTRIBUTE_MAPPING | keyof typeof SVG_TAG_MAPPING;
+                        const attributeNameMapping = ELEMENT_ATTRIBUTE_MAPPING[tagName as string]?.[attribute.name];
+
+                        let name = (attributeNameMapping) ||
                             ATTRIBUTE_MAPPING[attribute.name] ||
-                            (-1 < SVG_TAG_MAPPING.indexOf(tagName) && SVG_ATTRIBUTE_MAPPING[attribute.name]) ||
+                            (-1 < SVG_TAG_MAPPING.indexOf(tagName as string) && SVG_ATTRIBUTE_MAPPING[attribute.name]) ||
                             attribute.name;
                         let result = name;
 
@@ -465,6 +470,8 @@ export default function htmlToJsx(createElement: (tag: string) => Element): (con
                         return result;
                 }
             }
+
+
 
             _getStyleAttribute(styles: string): string {
                 const jsxStyles = new StyleParser(styles).toJSXString();
