@@ -18,5 +18,12 @@
   },
   "dependencies": {
     "jsdom": "^24.0.0"
-  }
+  },
+  "browser": {
+    "child_process": false,
+    "canvas": false,
+    "net": false,
+    "fs": false,
+    "tls": false
+}
 }
