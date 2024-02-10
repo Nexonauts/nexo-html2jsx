@@ -158,7 +158,7 @@ class StyleParser {
         const output: string[] = [];
         for (const key in this.styles) {
             if (this.styles.hasOwnProperty(key)) {
-                output.push(this.toJSXKey(key) + ': ' + this.toJSXValue(this.styles[key]));
+                output.push(this.toJSXKey(key) + ': ' + this.toJSXValue(this.styles[key] as string));
             }
         }
         return output.join(', ');
@@ -286,7 +286,7 @@ export default function htmlToJsx(createElement: (tag: string) => Element): (con
                 const regex = /<([^\s>]+)/;
                 const match = (html || '').match(regex);
 
-                return (match && CONTAINER_MAPPING[match[1]]) ? CONTAINER_MAPPING[match[1]] : 'div';
+                return ((match && CONTAINER_MAPPING[match[1] || "caption"] ) ? CONTAINER_MAPPING[match[1] || "caption" ] : 'div') as string;
             }
 
             _cleanInput(html: string): string {
@@ -298,20 +298,20 @@ export default function htmlToJsx(createElement: (tag: string) => Element): (con
             _onlyOneTopLevel(containerEl: Element): boolean {
                 if (
                     containerEl.childNodes.length === 1
-                    && containerEl.childNodes[0].nodeType === NODE_TYPE.ELEMENT
+                    && containerEl.childNodes[0]?.nodeType === NODE_TYPE.ELEMENT
                 ) {
                     return true;
                 }
                 let foundElement = false;
                 for (let i = 0, count = containerEl.childNodes.length; i < count; i++) {
                     const child = containerEl.childNodes[i];
-                    if (child.nodeType === NODE_TYPE.COMMENT || child.nodeType === NODE_TYPE.ELEMENT) {
+                    if (child?.nodeType === NODE_TYPE.COMMENT || child?.nodeType === NODE_TYPE.ELEMENT) {
                         if (foundElement) {
                             return false;
                         } else {
                             foundElement = true;
                         }
-                    } else if (child.nodeType === NODE_TYPE.TEXT && !isEmpty(child.textContent as string)) {
+                    } else if (child?.nodeType === NODE_TYPE.TEXT && !isEmpty(child?.textContent as string)) {
                         return false;
                     }
                 }
@@ -446,10 +446,9 @@ export default function htmlToJsx(createElement: (tag: string) => Element): (con
                     case 'style':
                         return this._getStyleAttribute(attribute.value);
                     default:
-                        const tagName = node.tagName.toLowerCase();
+                    const tagName = node.tagName.toLowerCase() as keyof ElementAttributeMapping | keyof SvgAttributeMapping;
                         let name =
-                            (ELEMENT_ATTRIBUTE_MAPPING[tagName] &&
-                                ELEMENT_ATTRIBUTE_MAPPING[tagName][attribute.name]) ||
+                            (ELEMENT_ATTRIBUTE_MAPPING[tagName] && ELEMENT_ATTRIBUTE_MAPPING[tagName][attribute.name]) ||
                             ATTRIBUTE_MAPPING[attribute.name] ||
                             (-1 < SVG_TAG_MAPPING.indexOf(tagName) && SVG_ATTRIBUTE_MAPPING[attribute.name]) ||
                             attribute.name;
